@@ -1,0 +1,262 @@
+<html>
+<head>
+<title>BeatBox.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #0033b3;}
+.s1 { color: #080808;}
+.s2 { color: #8c8c8c; font-style: italic;}
+.s3 { color: #067d17;}
+.s4 { color: #1750eb;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+BeatBox.java</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">javax.sound.midi.*;</span>
+<span class="s0">import </span><span class="s1">javax.swing.*;</span>
+<span class="s0">import </span><span class="s1">java.awt.*;</span>
+<span class="s0">import </span><span class="s1">java.awt.event.ActionEvent;</span>
+<span class="s0">import </span><span class="s1">java.awt.event.ActionListener;</span>
+<span class="s0">import </span><span class="s1">java.util.ArrayList;</span>
+
+<span class="s0">public class </span><span class="s1">BeatBox {</span>
+
+    <span class="s1">JPanel mainPanel;</span>
+    <span class="s2">//store the checkboxes in an arraylist</span>
+    <span class="s1">ArrayList&lt;JCheckBox&gt; checkBoxArrayList;</span>
+    <span class="s2">//need a Sequencer, Sequence and Track</span>
+    <span class="s1">Sequencer sequencer;</span>
+    <span class="s1">Sequence sequence;</span>
+    <span class="s1">Track track;</span>
+    <span class="s2">//and a Frame</span>
+    <span class="s1">JFrame theFrame;</span>
+
+    <span class="s2">//String array of instrument names for GUI labels</span>
+    <span class="s1">String[] instrumentNames = {</span><span class="s3">&quot;Bass Drum&quot;</span><span class="s1">, </span><span class="s3">&quot;Closed Hi-Hat&quot;</span><span class="s1">, </span><span class="s3">&quot;Open Hi-Hat&quot;</span><span class="s1">, </span><span class="s3">&quot;Acoustic Snare&quot;</span><span class="s1">,</span>
+            <span class="s3">&quot;Crash Cymbal&quot;</span><span class="s1">, </span><span class="s3">&quot;Hand Clap&quot;</span><span class="s1">, </span><span class="s3">&quot;High Tom&quot;</span><span class="s1">, </span><span class="s3">&quot;Hi Bongo&quot;</span><span class="s1">,</span>
+            <span class="s3">&quot;Maracas&quot;</span><span class="s1">, </span><span class="s3">&quot;Whistle&quot;</span><span class="s1">, </span><span class="s3">&quot;Low Conga&quot;</span><span class="s1">, </span><span class="s3">&quot;Cowbell&quot;</span><span class="s1">,</span>
+            <span class="s3">&quot;Vibraslap&quot;</span><span class="s1">, </span><span class="s3">&quot;Low-mid Tom&quot;</span><span class="s1">, </span><span class="s3">&quot;High Agogo&quot;</span><span class="s1">, </span><span class="s3">&quot;Open Hi Conga&quot;</span><span class="s1">};</span>
+    <span class="s2">//The drum channel is like a piano, except each ‘key’ on the piano is a different drum.</span>
+    <span class="s2">//So the number ‘35’ is the key for the Bass drum, 42 is Closed Hi-Hat, etc.</span>
+    <span class="s0">int</span><span class="s1">[] instruments = {</span><span class="s4">35</span><span class="s1">, </span><span class="s4">42</span><span class="s1">, </span><span class="s4">46</span><span class="s1">, </span><span class="s4">38</span><span class="s1">, </span><span class="s4">49</span><span class="s1">, </span><span class="s4">39</span><span class="s1">, </span><span class="s4">50</span><span class="s1">, </span><span class="s4">60</span><span class="s1">, </span><span class="s4">70</span><span class="s1">, </span><span class="s4">72</span><span class="s1">, </span><span class="s4">64</span><span class="s1">, </span><span class="s4">56</span><span class="s1">, </span><span class="s4">58</span><span class="s1">, </span><span class="s4">47</span><span class="s1">, </span><span class="s4">67</span><span class="s1">, </span><span class="s4">63</span><span class="s1">};</span>
+
+    <span class="s0">public static void </span><span class="s1">main(String[] args) {</span>
+        <span class="s0">new </span><span class="s1">BeatBox().buildGUI();</span>
+
+    <span class="s1">}</span>
+
+    <span class="s0">private void </span><span class="s1">buildGUI() {</span>
+        <span class="s1">theFrame = </span><span class="s0">new </span><span class="s1">JFrame(</span><span class="s3">&quot;BeatBox&quot;</span><span class="s1">);</span>
+        <span class="s2">//set default CLOSE action</span>
+        <span class="s1">theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);</span>
+        <span class="s2">//new BorderLayout instance</span>
+        <span class="s1">BorderLayout layout = </span><span class="s0">new </span><span class="s1">BorderLayout();</span>
+        <span class="s1">JPanel background = </span><span class="s0">new </span><span class="s1">JPanel(layout);</span>
+        <span class="s2">//create a border/margin round the UI components</span>
+        <span class="s1">background.setBorder(BorderFactory.createEmptyBorder(</span><span class="s4">10</span><span class="s1">, </span><span class="s4">10</span><span class="s1">, </span><span class="s4">10</span><span class="s1">, </span><span class="s4">10</span><span class="s1">));</span>
+
+        <span class="s2">//instantiate the checkBox arraylist</span>
+        <span class="s1">checkBoxArrayList = </span><span class="s0">new </span><span class="s1">ArrayList&lt;JCheckBox&gt;();</span>
+        <span class="s2">//box for the control buttons</span>
+        <span class="s1">Box buttonBox = </span><span class="s0">new </span><span class="s1">Box(BoxLayout.Y_AXIS);</span>
+
+        <span class="s2">//create start button</span>
+        <span class="s1">JButton start = </span><span class="s0">new </span><span class="s1">JButton(</span><span class="s3">&quot;Start&quot;</span><span class="s1">);</span>
+        <span class="s2">//add a listener, implemented as an inner class below</span>
+        <span class="s1">start.addActionListener(</span><span class="s0">new </span><span class="s1">MyStartListener());</span>
+        <span class="s1">buttonBox.add(start);</span>
+
+        <span class="s2">//create stop button</span>
+        <span class="s1">JButton stop = </span><span class="s0">new </span><span class="s1">JButton(</span><span class="s3">&quot;Stop&quot;</span><span class="s1">);</span>
+        <span class="s1">stop.addActionListener(</span><span class="s0">new </span><span class="s1">MyStopListener());</span>
+        <span class="s1">buttonBox.add(stop);</span>
+
+        <span class="s2">//create tempo up button</span>
+        <span class="s1">JButton upTempo = </span><span class="s0">new </span><span class="s1">JButton(</span><span class="s3">&quot;Tempo Up&quot;</span><span class="s1">);</span>
+        <span class="s1">upTempo.addActionListener(</span><span class="s0">new </span><span class="s1">MyUpTempoListener());</span>
+        <span class="s1">buttonBox.add(upTempo);</span>
+
+        <span class="s2">//create tempo down button</span>
+        <span class="s1">JButton downTempo = </span><span class="s0">new </span><span class="s1">JButton(</span><span class="s3">&quot;Tempo Down&quot;</span><span class="s1">);</span>
+        <span class="s1">downTempo.addActionListener(</span><span class="s0">new </span><span class="s1">MyDownTempoListener());</span>
+        <span class="s1">buttonBox.add(downTempo);</span>
+
+        <span class="s2">//box for the instrument labels</span>
+        <span class="s1">Box nameBox = </span><span class="s0">new </span><span class="s1">Box(BoxLayout.Y_AXIS);</span>
+        <span class="s2">//loop to add them to the box</span>
+        <span class="s0">for </span><span class="s1">(</span><span class="s0">int </span><span class="s1">i = </span><span class="s4">0</span><span class="s1">; i &lt; instrumentNames.length; i++) { </span><span class="s2">//or hard code '16'</span>
+            <span class="s1">nameBox.add(</span><span class="s0">new </span><span class="s1">Label(instrumentNames[i]));</span>
+        <span class="s1">}</span>
+
+        <span class="s2">//add the buttonBox and nameBox to the JPanel &quot;background&quot; EAST/WEST</span>
+        <span class="s1">background.add(BorderLayout.WEST, nameBox);</span>
+        <span class="s1">background.add(BorderLayout.EAST, buttonBox);</span>
+        <span class="s2">//add the background to the JFrame &quot;theFrame&quot;</span>
+        <span class="s1">theFrame.getContentPane().add(background);</span>
+
+        <span class="s2">//New 16 x 16 grid for the checkboxes</span>
+        <span class="s1">GridLayout gridLayout = </span><span class="s0">new </span><span class="s1">GridLayout(</span><span class="s4">16</span><span class="s1">, </span><span class="s4">16</span><span class="s1">);</span>
+        <span class="s2">//adjust gaps in layout</span>
+        <span class="s1">gridLayout.setVgap(</span><span class="s4">1</span><span class="s1">);</span>
+        <span class="s1">gridLayout.setHgap(</span><span class="s4">2</span><span class="s1">);</span>
+        <span class="s2">//add grid to the JPanel mainPanel</span>
+        <span class="s1">mainPanel = </span><span class="s0">new </span><span class="s1">JPanel(gridLayout);</span>
+        <span class="s2">//add mainPanel to the background</span>
+        <span class="s1">background.add(BorderLayout.CENTER, mainPanel);</span>
+
+        <span class="s2">//loop through array to add checkboxes</span>
+        <span class="s0">for </span><span class="s1">(</span><span class="s0">int </span><span class="s1">i = </span><span class="s4">0</span><span class="s1">; i &lt; </span><span class="s4">256</span><span class="s1">; i++) {</span>
+            <span class="s2">//create a new checkbox</span>
+            <span class="s1">JCheckBox checkBox = </span><span class="s0">new </span><span class="s1">JCheckBox();</span>
+            <span class="s2">//uncheck</span>
+            <span class="s1">checkBox.setSelected(</span><span class="s0">false</span><span class="s1">);</span>
+            <span class="s2">//add it to the ArrayList</span>
+            <span class="s1">checkBoxArrayList.add(checkBox);</span>
+            <span class="s2">//and add to the mainPanel JPanel</span>
+            <span class="s1">mainPanel.add(checkBox);</span>
+        <span class="s1">}</span><span class="s2">//end checkbox loop</span>
+
+        <span class="s1">setUpMidi();</span>
+
+        <span class="s2">//set where the frame sits on screen and its size</span>
+        <span class="s1">theFrame.setBounds(</span><span class="s4">50</span><span class="s1">, </span><span class="s4">50</span><span class="s1">, </span><span class="s4">300</span><span class="s1">, </span><span class="s4">300</span><span class="s1">);</span>
+        <span class="s2">//Causes this Window to be sized to fit the preferred size and layouts of its subcomponents.</span>
+        <span class="s1">theFrame.pack();</span>
+        <span class="s2">//show frame on screen</span>
+        <span class="s1">theFrame.setVisible(</span><span class="s0">true</span><span class="s1">);</span>
+    <span class="s1">}</span><span class="s2">//close buildGUI</span>
+
+    <span class="s2">//set up MIDI</span>
+    <span class="s0">public void </span><span class="s1">setUpMidi() {</span>
+        <span class="s2">//use try catch for sequencer as it can throw an exception</span>
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s2">//add sequencer</span>
+            <span class="s1">sequencer = MidiSystem.getSequencer();</span>
+            <span class="s1">sequencer.open();</span>
+            <span class="s2">//add sequence - don't know what the parameters mean!</span>
+            <span class="s1">sequence = </span><span class="s0">new </span><span class="s1">Sequence(Sequence.PPQ, </span><span class="s4">4</span><span class="s1">);</span>
+            <span class="s2">//add a track</span>
+            <span class="s1">track = sequence.createTrack();</span>
+            <span class="s2">//set the initial tempo</span>
+            <span class="s1">sequencer.setTempoInBPM(</span><span class="s4">120</span><span class="s1">);</span>
+
+        <span class="s1">} </span><span class="s0">catch </span><span class="s1">(Exception e) {</span>
+            <span class="s1">e.printStackTrace();</span>
+        <span class="s1">}</span>
+    <span class="s1">} </span><span class="s2">//close setUpMidi</span>
+
+
+    <span class="s0">private void </span><span class="s1">buildTrackAndStart() {</span>
+        <span class="s2">//turn checkbox state into MIDI events and add them to the Track</span>
+        <span class="s2">//Make a 16-element array to hold the values for one instrument, across all 16 beats.</span>
+        <span class="s2">// If the instrument is supposed to play on that beat, the value at that element</span>
+        <span class="s2">//will be the key. If that instrument is NOT supposed to play on that beat, put in a zero.</span>
+        <span class="s0">int</span><span class="s1">[] trackList = </span><span class="s0">null</span><span class="s1">;</span>
+
+        <span class="s2">//get rid of the old track, make a fresh one.</span>
+        <span class="s1">sequence.deleteTrack(track);</span>
+        <span class="s1">track = sequence.createTrack();</span>
+
+        <span class="s2">//do this for each of the 16 ROWS (i.e. Bass, Congo, etc.)</span>
+        <span class="s0">for </span><span class="s1">(</span><span class="s0">int </span><span class="s1">i = </span><span class="s4">0</span><span class="s1">; i &lt; </span><span class="s4">16</span><span class="s1">; i++) {</span>
+            <span class="s1">trackList = </span><span class="s0">new int</span><span class="s1">[</span><span class="s4">16</span><span class="s1">]; </span><span class="s2">//16 rows</span>
+            <span class="s2">//set the 'key' that represents each instrument in the instruments array</span>
+            <span class="s2">//eg number ‘35’ is the key for the Bass drum, 42 is Closed Hi-Hat</span>
+            <span class="s0">int </span><span class="s1">key = instruments[i];</span>
+
+            <span class="s2">//do this for each of the 16 BEATS in the row</span>
+            <span class="s0">for </span><span class="s1">(</span><span class="s0">int </span><span class="s1">j = </span><span class="s4">0</span><span class="s1">; j &lt; </span><span class="s4">16</span><span class="s1">; j++) {</span>
+
+                <span class="s1">JCheckBox jc = checkBoxArrayList.get(j + </span><span class="s4">16 </span><span class="s1">* i);</span>
+                <span class="s2">//the key value in this slot in the array (the slot that represents this beat).</span>
+                <span class="s2">// Otherwise, the instrument is NOT supposed to play at this beat, so set it to zero.</span>
+                <span class="s0">if </span><span class="s1">(jc.isSelected()) {</span>
+                    <span class="s1">trackList[j] = key;</span>
+                <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                    <span class="s1">trackList[j] = </span><span class="s4">0</span><span class="s1">;</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span><span class="s2">//close inner loop</span>
+            <span class="s2">//For this instrument, and for all 16 beats, make events and add them to the track.</span>
+            <span class="s1">makeTracks(trackList);</span>
+            <span class="s1">track.add(makeEvent(</span><span class="s4">176</span><span class="s1">,</span><span class="s4">1</span><span class="s1">, </span><span class="s4">127</span><span class="s1">, </span><span class="s4">0</span><span class="s1">, </span><span class="s4">16</span><span class="s1">));</span>
+        <span class="s1">} </span><span class="s2">//close outer loop</span>
+
+        <span class="s2">//We always want to make sure that there IS an event at beat 16 (it goes 0 to 15).</span>
+        <span class="s2">// Otherwise, the BeatBox might not go the full 16 beats before it starts over.</span>
+        <span class="s1">track.add(makeEvent(</span><span class="s4">192</span><span class="s1">, </span><span class="s4">9</span><span class="s1">, </span><span class="s4">1</span><span class="s1">, </span><span class="s4">0</span><span class="s1">, </span><span class="s4">15</span><span class="s1">));</span>
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s1">sequencer.setSequence(sequence);</span>
+            <span class="s1">sequencer.setLoopCount(sequencer.LOOP_CONTINUOUSLY); </span><span class="s2">//or specify how many times</span>
+            <span class="s1">sequencer.start(); </span><span class="s2">//play it!</span>
+            <span class="s1">sequencer.setTempoInBPM(</span><span class="s4">120</span><span class="s1">);</span>
+        <span class="s1">} </span><span class="s0">catch </span><span class="s1">(Exception e) {e.printStackTrace();}</span>
+    <span class="s1">} </span><span class="s2">//close buildTrackAndStart</span>
+
+      <span class="s2">//inner class</span>
+    <span class="s0">public class </span><span class="s1">MyStartListener </span><span class="s0">implements </span><span class="s1">ActionListener {</span>
+        <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent a) {</span>
+            <span class="s1">buildTrackAndStart();</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s2">//inner class</span>
+    <span class="s0">public class </span><span class="s1">MyStopListener </span><span class="s0">implements </span><span class="s1">ActionListener {</span>
+        <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent a) {</span>
+            <span class="s1">sequencer.stop();</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s2">//inner class</span>
+    <span class="s0">public class </span><span class="s1">MyUpTempoListener </span><span class="s0">implements </span><span class="s1">ActionListener {</span>
+        <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent a) {</span>
+            <span class="s0">float </span><span class="s1">tempoFactor = sequencer.getTempoFactor();</span>
+            <span class="s2">//adjust up by 3%</span>
+            <span class="s1">sequencer.setTempoFactor((</span><span class="s0">float</span><span class="s1">) (tempoFactor * </span><span class="s4">1.03</span><span class="s1">));</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s2">//inner class</span>
+    <span class="s0">public class </span><span class="s1">MyDownTempoListener </span><span class="s0">implements </span><span class="s1">ActionListener {</span>
+        <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent a) {</span>
+            <span class="s0">float </span><span class="s1">tempoFactor = sequencer.getTempoFactor();</span>
+            <span class="s2">//adjust down by 3%</span>
+            <span class="s1">sequencer.setTempoFactor((</span><span class="s0">float</span><span class="s1">) (tempoFactor * </span><span class="s4">0.97</span><span class="s1">));</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s0">private </span><span class="s1">MidiEvent makeEvent(</span><span class="s0">int </span><span class="s1">comd, </span><span class="s0">int </span><span class="s1">chan, </span><span class="s0">int </span><span class="s1">one, </span><span class="s0">int </span><span class="s1">two, </span><span class="s0">int </span><span class="s1">tick) {</span>
+        <span class="s1">MidiEvent event = </span><span class="s0">null</span><span class="s1">;</span>
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s1">ShortMessage shortMessage = </span><span class="s0">new </span><span class="s1">ShortMessage();</span>
+            <span class="s1">shortMessage.setMessage(comd, chan ,one, two);</span>
+            <span class="s1">event = </span><span class="s0">new </span><span class="s1">MidiEvent(shortMessage, tick);</span>
+        <span class="s1">} </span><span class="s0">catch</span><span class="s1">(Exception e) {e.printStackTrace();}</span>
+        <span class="s0">return </span><span class="s1">event;</span>
+    <span class="s1">}</span>
+
+    <span class="s2">//This makes events for one instrument at a time, for all 16 beats.</span>
+    <span class="s2">// So it might get an int[ ] for the Bass drum, and each index in the array will hold either</span>
+    <span class="s2">//the key of that instrument, or a zero. If it’s a zero, the instrument isn’t supposed to play at that beat.</span>
+    <span class="s2">//Otherwise, make an event and add it to the track</span>
+    <span class="s0">private void </span><span class="s1">makeTracks(</span><span class="s0">int</span><span class="s1">[] trackList) {</span>
+
+        <span class="s0">for </span><span class="s1">(</span><span class="s0">int </span><span class="s1">i =</span><span class="s4">0</span><span class="s1">; i &lt; </span><span class="s4">16</span><span class="s1">; i++) {</span>
+            <span class="s0">int </span><span class="s1">key = trackList[i];</span>
+
+            <span class="s0">if </span><span class="s1">(key != </span><span class="s4">0</span><span class="s1">) { </span><span class="s2">//ie it is an instrument</span>
+                <span class="s1">track.add(makeEvent(</span><span class="s4">144</span><span class="s1">, </span><span class="s4">9</span><span class="s1">, key, </span><span class="s4">100</span><span class="s1">, i)); </span><span class="s2">//NOTE ON and NOTE OFF events - add to track</span>
+                <span class="s1">track.add(makeEvent(</span><span class="s4">128</span><span class="s1">, </span><span class="s4">9</span><span class="s1">, key, </span><span class="s4">100</span><span class="s1">, i + </span><span class="s4">1</span><span class="s1">));</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+
+
+<span class="s1">}</span><span class="s2">//close class</span>
+</pre>
+</body>
+</html>
