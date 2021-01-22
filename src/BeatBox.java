@@ -1,8 +1,10 @@
 import javax.sound.midi.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.util.ArrayList;
 
 public class BeatBox {
@@ -42,7 +44,7 @@ public class BeatBox {
         background.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         //instantiate the checkBox arraylist
-        checkBoxArrayList = new ArrayList<JCheckBox>();
+        checkBoxArrayList = new ArrayList<>();
         //box for the control buttons
         Box buttonBox = new Box(BoxLayout.Y_AXIS);
 
@@ -67,11 +69,31 @@ public class BeatBox {
         downTempo.addActionListener(new MyDownTempoListener());
         buttonBox.add(downTempo);
 
+       /* //create serialise it button
+        JButton serializeIt = new JButton("Serialise It");
+        serializeIt.addActionListener(new MySendListener());
+        buttonBox.add(serializeIt);
+
+        //create restore button
+        JButton restore = new JButton("Restore");
+        restore.addActionListener(new MyReadInListener());
+        buttonBox.add(restore);*/
+
+        //create Save button
+        JButton save = new JButton("Save");
+        save.addActionListener(new MySendListener());
+        buttonBox.add(save);
+
+        //create Open button
+        JButton open = new JButton("Open");
+        open.addActionListener(new MyReadInListener());
+        buttonBox.add(open);
+
         //box for the instrument labels
         Box nameBox = new Box(BoxLayout.Y_AXIS);
         //loop to add them to the box
-        for (int i = 0; i < instrumentNames.length; i++) { //or hard code '16'
-            nameBox.add(new Label(instrumentNames[i]));
+        for (String instrumentName : instrumentNames) { //or hard code '16'
+            nameBox.add(new Label(instrumentName));
         }
 
         //add the buttonBox and nameBox to the JPanel "background" EAST/WEST
@@ -164,7 +186,7 @@ public class BeatBox {
             }//close inner loop
             //For this instrument, and for all 16 beats, make events and add them to the track.
             makeTracks(trackList);
-            track.add(makeEvent(176,1, 127, 0, 16));
+            track.add(makeEvent(176, 1, 127, 0, 16));
         } //close outer loop
 
         //We always want to make sure that there IS an event at beat 16 (it goes 0 to 15).
@@ -175,10 +197,53 @@ public class BeatBox {
             sequencer.setLoopCount(sequencer.LOOP_CONTINUOUSLY); //or specify how many times
             sequencer.start(); //play it!
             sequencer.setTempoInBPM(120);
-        } catch (Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     } //close buildTrackAndStart
 
-      //inner class
+    public class MySendListener implements ActionListener {
+
+        public void actionPerformed(ActionEvent a) {
+            boolean[] checkboxState = new boolean[256];
+            for (int i = 0; i < 256; i++) {
+                JCheckBox check = checkBoxArrayList.get(i);
+                if (check.isSelected()) {
+                    checkboxState[i] = true;
+                }
+            }
+            try {
+                FileOutputStream fileStream = new FileOutputStream("Checkbox.ser");
+                ObjectOutputStream os = new ObjectOutputStream(fileStream);
+                os.writeObject(checkboxState);
+                System.out.println("File Saved");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        } // close method
+    } // close inner class
+
+    public class MyReadInListener implements ActionListener {
+        public void actionPerformed(ActionEvent a) {
+            boolean[] checkboxState = null;
+            try {
+                FileInputStream fileIn = new FileInputStream("Checkbox.ser");
+                ObjectInputStream is = new ObjectInputStream(fileIn);
+                checkboxState = (boolean[]) is.readObject();
+                System.out.println("File Loaded");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            for (int i = 0; i < 256; i++) {
+                JCheckBox check = checkBoxArrayList.get(i);
+                check.setSelected(checkboxState[i]);
+            }
+            sequencer.stop();
+            buildTrackAndStart();
+        } // close method
+    } // close inner class
+
+    //inner class
     public class MyStartListener implements ActionListener {
         public void actionPerformed(ActionEvent a) {
             buildTrackAndStart();
@@ -191,6 +256,21 @@ public class BeatBox {
             sequencer.stop();
         }
     }
+
+    //inner class
+    public class MySerializeItListener implements ActionListener {
+        public void actionPerformed(ActionEvent a) {
+
+        }
+    }
+
+    //inner class
+    public class MyRestoreListener implements ActionListener {
+        public void actionPerformed(ActionEvent a) {
+
+        }
+    }
+
 
     //inner class
     public class MyUpTempoListener implements ActionListener {
@@ -214,9 +294,11 @@ public class BeatBox {
         MidiEvent event = null;
         try {
             ShortMessage shortMessage = new ShortMessage();
-            shortMessage.setMessage(comd, chan ,one, two);
+            shortMessage.setMessage(comd, chan, one, two);
             event = new MidiEvent(shortMessage, tick);
-        } catch(Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return event;
     }
 
@@ -226,7 +308,7 @@ public class BeatBox {
     //Otherwise, make an event and add it to the track
     private void makeTracks(int[] trackList) {
 
-        for (int i =0; i < 16; i++) {
+        for (int i = 0; i < 16; i++) {
             int key = trackList[i];
 
             if (key != 0) { //ie it is an instrument
@@ -235,7 +317,4 @@ public class BeatBox {
             }
         }
     }
-
-
-
 }//close class
